@@ -267,7 +267,7 @@ class Tracer(object):
                         or not self._address_in_binary(current.addr):
 
                     # If dynamic trace is in the PLT stub, update bb_cnt until it's out
-                    while self._addr_in_plt(self.trace[self.bb_cnt]):
+                    while self.bb_cnt < len(self.trace) and self._addr_in_plt(self.trace[self.bb_cnt]):
                         self.bb_cnt += 1
 
                 # handle hooked functions
