@@ -2,13 +2,14 @@ import os
 from elftools.elf.elffile import ELFFile
 import re
 import cPickle as pickle
+import sys
 
 l = 30
-sign_fn = '/tmp/sign_libc'
 
-class libcsign():
+class LibcSign():
 
     def __init__(self):
+        self.sign_fn = '/tmp/sign_libc'
         self.signs = self.get_sign()
 
 
@@ -18,7 +19,7 @@ class libcsign():
         con = section.data()
          
         # syscall
-        call = "(.*?)\xb8(?P<eax>.{2})\x00\x00\xff\x15(.){4}"
+        call = "(.*?)\xb8(?P<eax>.{2})\x00\x00\xff\x15"
         m = re.match(call, con)
         if m:
             con = m.group(0)
@@ -28,24 +29,23 @@ class libcsign():
 
 
     def get_sign(self):
-        if not os.path.isfile(sign_fn):
-
+        if not os.path.isfile(self.sign_fn):
             t = dict()
-            f = os.listdir('./libc')
-            for ff in f:
-                p = os.path.join(os.path.abspath('./libc'), ff)
+            dirs = os.listdir('./libc')
+            for fname in dirs:
+                p = os.path.join(os.path.abspath('./libc'), fname)
                 fn, con = self.gen_sign(p)
                 if len(con) > 0:
                     t[fn] = con
 
-            with open(sign_fn, 'w') as f:
+            with open(self.sign_fn, 'w') as f:
                 f.write(pickle.dumps(t))
             return t
  
         else:
-            return pickle.load(open(sign_fn, 'rb'))
+            return pickle.load(open(self.sign_fn, 'rb'))
 
 
-
-c = libcsign()
-print c.signs 
+if __name__  == '__main__':
+    c = LibcSign()
+    print c.signs
