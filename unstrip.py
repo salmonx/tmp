@@ -136,5 +136,5 @@ def unstrip(path, ref):
 
 if __name__ == '__main__':
     bin_path = os.path.abspath(sys.argv[1])
-    ref_path = os.path.abspath(len(sys.argv) >= 3 and sys.argv[2] or "test")
+    ref_path = os.path.abspath(len(sys.argv) >= 3 and sys.argv[2] or "libc_sample")
     print unstrip(bin_path, ref_path)
