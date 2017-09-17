@@ -1,21 +1,34 @@
-import angr
-import angrop
-import sys
-import hashlib
+
+import functions
 import os
+import sys
+
+def basename(f):
+	return os.path.basename(f)
 
 
-binary = sys.argv[1]
+def getrop(binary):
+	path = "/tmp/rop-{}".format(os.path.basename(binary))
+	logpath = "/tmp/rop-log-{}".format(os.path.basename(binary))
 
-project = angr.Project(binary)
+	if not os.path.isfile(path):
+		open(logpath, 'w').write('running')
 
-# we search for ROP gadgets now to avoid the memory exhaustion bug in pypy
-# hash binary contents for rop cache name
-binhash = hashlib.md5(open(binary).read()).hexdigest()
-rop_cache_path = os.path.join("/tmp", "%s-%s-rop" % (os.path.basename(binary), binhash))
+		import angr, angrop
+		p = angr.Project(binary)
+		rop = p.analyses.ROP(fast_mode=True)
+		rop.set_badbytes([0x00, 0xD])
+
+		try:
+			rop.find_gadgets_single_threaded()
+			rop.save_gadgets(path)
+			open(logpath, 'w').write('done')
+		except:
+			try:
+				rop.save_gadgets(path)
+			except:
+				open(logpath, 'w').write('error')
 
 
-if not os.path.exists(rop_cache_path):
-    rop = project.analyses.ROP()
-    rop.find_gadgets(show_progress=False)
-    rop.save_gadgets(rop_cache_path)
+if __name__ == '__main__':
+	getrop(sys.argv[1])
