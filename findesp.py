@@ -14,12 +14,12 @@ def find_jmpesp(binary):
             lastsec = sec
         else:
             addr = lastsec.header.sh_addr + index - lastsec.header.sh_offset
-            print "addr:", hex(addr)
             return addr
-    return None
+    return False
 
 
 
 
 if __name__ == '__main__':
     addr = find_jmpesp(sys.argv[1])
+    print "addr:", hex(addr)
