@@ -79,7 +79,7 @@ def recognize(data, base, addr, templates, recognized):
         recognized[addr] = name
     return recognized[addr]
 
-def unstrip(path, ref):
+def unstrip(path, ref="libc_sample"):
     templates = []
     recognized = {}
 
